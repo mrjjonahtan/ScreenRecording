@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">ScreenRecording</string>
+    <string name="sh">SH</string>
+    <string name="hd">HD</string>
+    <string name="sound">声音</string>
+    <string name="hit">提示字符</string>
+    <string name="save">只存</string>
+    <string name="watch">只看</string>
+    <string name="watchAndSave">边看边存</string>
+    <string name="start">开始录制</string>
+    <string name="stop">停止录制</string>
 </resources>
