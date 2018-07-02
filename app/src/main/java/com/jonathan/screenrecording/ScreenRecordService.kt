@@ -97,10 +97,10 @@ class ScreenRecordService : Service() {
 
             recordVirtualDisplay()
 
+            release()
+
         }catch(e:Exception){
             Log.e(Tag,e.message)
-        }finally {
-            release()
         }
     }
 
@@ -114,25 +114,47 @@ class ScreenRecordService : Service() {
     fun recordVirtualDisplay(){
         while (!mQuit.get()){
             val index = mEncoder!!.dequeueOutputBuffer(mBufferInfo, TIMEOUT_US.toLong())
+
             if (index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 // 后续输出格式变化
                 resetOutputFormat()
             }else if (index == MediaCodec.INFO_TRY_AGAIN_LATER) {
-
+                //超时
+                continue
             }else if (index >= 0) {
                 // 有效输出
                 if (!mMuxerStarted) {
-                    throw IllegalStateException("MediaMuxer dose not call addTrack(format) ");
+                    throw IllegalStateException("MediaMuxer dose not call addTrack(format) ")
                 }
 
                 encodeToVideoTrack(index)
-                mEncoder!!.releaseOutputBuffer(index, false)
+
+                //如果缓冲区里的可展示时间>当前视频播放的进度，就休眠一下
+                sleepRender(mBufferInfo, System.currentTimeMillis())
+                //渲染
+                mEncoder!!.releaseOutputBuffer(index, true)
 
             }
 
         }
     }
 
+    //延迟渲染
+    private fun sleepRender(audioBufferInfo: MediaCodec.BufferInfo, startMs: Long) {
+        while (audioBufferInfo.presentationTimeUs / 1000 > System.currentTimeMillis() - startMs) {
+            try {
+                Thread.sleep(10)
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+                break
+            }
+
+        }
+    }
+
+    /**
+     * 硬解码获取实时帧数据并写入mp4文件
+     */
     fun encodeToVideoTrack(index:Int){
         // 获取到的实时帧视频数据
         var encodedData = mEncoder!!.getOutputBuffer(index)
@@ -145,16 +167,17 @@ class ScreenRecordService : Service() {
             Log.d(Tag, "ignoring BUFFER_FLAG_CODEC_CONFIG")
             mBufferInfo.size = 0
         }
-        if (mBufferInfo.size === 0) {
-            Log.d(Tag, "info.size == 0, drop it.")
+
+        if (mBufferInfo.size == 0) {
             encodedData = null
-        } else {
-            //      Log.d(TAG, "got buffer, info: size=" + mBufferInfo.size + ", presentationTimeUs="
-            //          + mBufferInfo.presentationTimeUs + ", offset=" + mBufferInfo.offset);
         }
+
         if (encodedData != null) {
+            //将编码的样本写入复用器
             mMuxer!!.writeSampleData(mVideoTrackIndex, encodedData, mBufferInfo)
         }
+
+
     }
 
     fun resetOutputFormat(){
@@ -186,8 +209,8 @@ class ScreenRecordService : Service() {
         }
 
         mEncoder = MediaCodec.createEncoderByType(MIME_TYPE)
-        mEncoder!!.configure(format,mSurface,null,MediaCodec.CONFIGURE_FLAG_ENCODE)
-        mSurface = mEncoder!!.createInputSurface()
+        mEncoder!!.configure(format,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE)
+        //mSurface = mEncoder!!.createInputSurface()
 
         mEncoder!!.start()
     }
