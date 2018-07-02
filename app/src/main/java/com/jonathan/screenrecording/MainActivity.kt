@@ -12,7 +12,9 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.SurfaceHolder
 import kotlinx.android.synthetic.main.activity_main.*
+import javax.security.auth.callback.Callback
 
 class MainActivity : AppCompatActivity() {
     private val instance by lazy { this }
@@ -33,13 +35,31 @@ class MainActivity : AppCompatActivity() {
     private var mediaProjection: MediaProjection? = null
     private var captureIntent: Intent? = null
 
+    private val callback = object:SurfaceHolder.Callback{
+        //销毁时
+        override fun surfaceDestroyed(holder: SurfaceHolder?) {
+
+        }
+
+        //被创建时
+        override fun surfaceCreated(holder: SurfaceHolder?) {
+
+        }
+
+        //大小发生改变时
+        override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
+
+        }
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         mInit()
 
-        mainfun()
+        //mainfun()
     }
 
     fun mainfun() {
@@ -54,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         mProjectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager?
         captureIntent = mProjectionManager!!.createScreenCaptureIntent()
 
+        surfaceView.holder.addCallback(callback)
 
         rb_sh.setOnClickListener {
             isHD = false
@@ -92,7 +113,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopRecording() {
-        val service: Intent = Intent(instance, MediaRecordService::class.java)
+        //val service: Intent = Intent(instance, MediaRecordService::class.java)
+        val service: Intent = Intent(instance, ScreenRecordService::class.java)
+
         stopService(service)
     }
 
@@ -122,8 +145,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             GlobalVariables().setmMediaProjection(mediaProjection)
+            GlobalVariables().surface = surfaceView.holder.surface
 
-            val service: Intent = Intent(instance, MediaRecordService::class.java)
+            //val service: Intent = Intent(instance, MediaRecordService::class.java)//只有存
+            val service: Intent = Intent(instance, ScreenRecordService::class.java)//全有
 
             service.putExtra("width", width)
             service.putExtra("height", height)

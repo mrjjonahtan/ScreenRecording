@@ -18,6 +18,7 @@
         </activity>
 
         <service android:name=".MediaRecordService"></service>
+        <service android:name=".ScreenRecordService"></service>
     </application>
 
 

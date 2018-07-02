@@ -11,8 +11,11 @@ import android.util.Log
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * 只存
+ */
 
-public class MediaRecordService : Service() {
+class MediaRecordService : Service() {
     private val Tag = "MediaRecordService"
 
     private var width: Int = 0
