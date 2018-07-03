@@ -20,8 +20,6 @@ import com.jonathan.screenrecording.R.string.stop
 
 
 
-
-
 /**
  * 可以只存，可以边看边存，可以只看不存
  */
@@ -37,7 +35,7 @@ class ScreenRecordService : Service() {
     private val IFRAME_INTERVAL = 10 // 10 seconds between
 
     // I-frames
-    private val TIMEOUT_US = 10000
+    private val TIMEOUT_US = 10
 
     private var width: Int = 0
     private var height: Int = 0
@@ -53,14 +51,13 @@ class ScreenRecordService : Service() {
 
 
     private var mMediaProjection: MediaProjection? = null
-    private var mEncoder: MediaCodec? = null
+    private var mMC: MediaCodec? = null
     private var mSurface: Surface? = null
     private var mMuxer: MediaMuxer? = null
     private var mVirtualDisplay:VirtualDisplay? = null
 
     private var mQuit: AtomicBoolean = AtomicBoolean(false)
     private var mBufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
-
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -90,14 +87,14 @@ class ScreenRecordService : Service() {
     fun mainfun(){
 
         try {
-            prepareEncoder()
-            mMuxer = MediaMuxer(fPath,MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            //prepareEncoder()
+            //mMuxer = MediaMuxer(fPath,MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
             mVirtualDisplay = mMediaProjection!!.createVirtualDisplay(Tag + "-display",width,height,mScreenDensity, DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,mSurface,null,null)
 
-            recordVirtualDisplay()
+            //recordVirtualDisplay()
 
-            release()
+            //release()
 
         }catch(e:Exception){
             Log.e(Tag,e.message)
@@ -113,14 +110,13 @@ class ScreenRecordService : Service() {
 
     fun recordVirtualDisplay(){
         while (!mQuit.get()){
-            val index = mEncoder!!.dequeueOutputBuffer(mBufferInfo, TIMEOUT_US.toLong())
+            val index = mMC!!.dequeueOutputBuffer(mBufferInfo, TIMEOUT_US.toLong())
 
             if (index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 // 后续输出格式变化
                 resetOutputFormat()
             }else if (index == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 //超时
-                continue
             }else if (index >= 0) {
                 // 有效输出
                 if (!mMuxerStarted) {
@@ -131,8 +127,8 @@ class ScreenRecordService : Service() {
 
                 //如果缓冲区里的可展示时间>当前视频播放的进度，就休眠一下
                 sleepRender(mBufferInfo, System.currentTimeMillis())
-                //渲染
-                mEncoder!!.releaseOutputBuffer(index, true)
+
+                mMC!!.releaseOutputBuffer(index, true)
 
             }
 
@@ -157,7 +153,7 @@ class ScreenRecordService : Service() {
      */
     fun encodeToVideoTrack(index:Int){
         // 获取到的实时帧视频数据
-        var encodedData = mEncoder!!.getOutputBuffer(index)
+        var encodedData = mMC!!.getOutputBuffer(index)
 
         if (mBufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG !== 0) {
             // The codec config data was pulled out and fed to the muxer
@@ -185,41 +181,44 @@ class ScreenRecordService : Service() {
         // once
 
         if (mMuxerStarted) {
-            throw IllegalStateException("output format already changed!");
+            throw IllegalStateException("output format already changed!")
         }
-        val newFormat = mEncoder!!.getOutputFormat()
-        mVideoTrackIndex = mMuxer!!.addTrack(newFormat)
+
+        val mMF = mMC!!.getOutputFormat()
+
+        mVideoTrackIndex = mMuxer!!.addTrack(mMF)
         mMuxer!!.start()
         mMuxerStarted = true
+
     }
 
 
     fun prepareEncoder(){
-        var format: MediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, width, height)
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL)
+        var mMF: MediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, width, height)
+        mMF.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+        mMF.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL)
 
         // sd hd
         if (isHD) {
-            format.setInteger(MediaFormat.KEY_BIT_RATE,FRAME_RATE_HD)
-            format.setInteger(MediaFormat.KEY_FRAME_RATE, width * height * 5)
+            mMF.setInteger(MediaFormat.KEY_BIT_RATE,FRAME_RATE_HD)
+            mMF.setInteger(MediaFormat.KEY_FRAME_RATE, width * height * 5)
         } else {
-            format.setInteger(MediaFormat.KEY_BIT_RATE,FRAME_RATE_SD)
-            format.setInteger(MediaFormat.KEY_FRAME_RATE, width * height)
+            mMF.setInteger(MediaFormat.KEY_BIT_RATE,FRAME_RATE_SD)
+            mMF.setInteger(MediaFormat.KEY_FRAME_RATE, width * height)
         }
 
-        mEncoder = MediaCodec.createEncoderByType(MIME_TYPE)
-        mEncoder!!.configure(format,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE)
-        //mSurface = mEncoder!!.createInputSurface()
+        mMC = MediaCodec.createEncoderByType(MIME_TYPE)
+        mMC!!.configure(mMF,null,null,MediaCodec.CONFIGURE_FLAG_ENCODE)
+        mSurface = mMC!!.createInputSurface()
 
-        mEncoder!!.start()
+        mMC!!.start()
     }
 
     private fun release() {
-        if (mEncoder != null) {
-            mEncoder!!.stop()
-            mEncoder!!.release()
-            mEncoder = null
+        if (mMC != null) {
+            mMC!!.stop()
+            mMC!!.release()
+            mMC = null
         }
         if (mVirtualDisplay != null) {
             mVirtualDisplay!!.release()
@@ -235,7 +234,7 @@ class ScreenRecordService : Service() {
     }
 
     override fun onDestroy() {
-        quit()
+        //quit()
         release()
         super.onDestroy()
     }

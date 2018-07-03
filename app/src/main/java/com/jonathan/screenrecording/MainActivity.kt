@@ -1,20 +1,14 @@
 package com.jonathan.screenrecording
 
-import android.Manifest
-import android.Manifest.permission
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.SurfaceHolder
 import kotlinx.android.synthetic.main.activity_main.*
-import javax.security.auth.callback.Callback
 
 class MainActivity : AppCompatActivity() {
     private val instance by lazy { this }
@@ -38,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     private val callback = object:SurfaceHolder.Callback{
         //销毁时
         override fun surfaceDestroyed(holder: SurfaceHolder?) {
-
+            stopRecording()
         }
 
         //被创建时
