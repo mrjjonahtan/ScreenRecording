@@ -90,7 +90,6 @@ class ScreenRecordService : Service() {
             mVirtualDisplay = mMediaProjection!!.createVirtualDisplay(Tag + "-display", width, height, mScreenDensity, DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC, mSurface, null, null)
 
             recordVirtualDisplay()
-            //release()
 
         } catch (e: Exception) {
             Log.e(Tag, e.message)
@@ -125,9 +124,6 @@ class ScreenRecordService : Service() {
 
                         encodeToVideoTrack(index)
 
-                        //如果缓冲区里的可展示时间>当前视频播放的进度，就休眠一下
-                        //sleepRender(mBufferInfo, System.currentTimeMillis())
-
                         mMC!!.releaseOutputBuffer(index, true)
 
                     }
@@ -135,19 +131,6 @@ class ScreenRecordService : Service() {
             }
         })
         mThread!!.start()
-    }
-
-    //延迟渲染
-    private fun sleepRender(audioBufferInfo: MediaCodec.BufferInfo, startMs: Long) {
-        while (audioBufferInfo.presentationTimeUs / 1000 > System.currentTimeMillis() - startMs) {
-            try {
-                Thread.sleep(10)
-            } catch (e: InterruptedException) {
-                e.printStackTrace()
-                break
-            }
-
-        }
     }
 
     /**
@@ -238,7 +221,6 @@ class ScreenRecordService : Service() {
     }
 
     override fun onDestroy() {
-        //quit()
         release()
         super.onDestroy()
     }
