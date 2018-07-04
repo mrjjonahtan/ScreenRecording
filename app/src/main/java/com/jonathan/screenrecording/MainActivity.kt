@@ -32,7 +32,9 @@ class MainActivity : AppCompatActivity() {
     private val callback = object:SurfaceHolder.Callback{
         //销毁时
         override fun surfaceDestroyed(holder: SurfaceHolder?) {
+            holder!!.surface.release()
             stopRecording()
+
         }
 
         //被创建时
