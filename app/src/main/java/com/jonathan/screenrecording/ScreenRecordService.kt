@@ -141,7 +141,8 @@ class ScreenRecordService : Service() {
     fun encodeToVideoTrack(index: Int) {
         // 获取到的实时帧视频数据
         var encodedData = mMC!!.getOutputBuffer(index)
-
+        //var image = mMC!!.getOutputImage(index)
+        //图片显示到前端即可显示
 
         if (mBufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
             // This indicated that the buffer marked as such contains codec
