@@ -2,20 +2,19 @@ package com.jonathan.screenrecording;
 
 import android.media.projection.MediaProjection;
 import android.view.Surface;
+import android.view.SurfaceHolder;
 
 public class GlobalVariables {
     private static MediaProjection mMediaProjection;
-    private static Surface surface;
+    private static SurfaceHolder surfaceHolder;
 
-
-    public Surface getSurface() {
-        return surface;
+    public SurfaceHolder getSurfaceHolder() {
+        return surfaceHolder;
     }
 
-    public void setSurface(Surface surface) {
-        GlobalVariables.surface = surface;
+    public void setSurfaceHolder(SurfaceHolder surfaceHolder) {
+        GlobalVariables.surfaceHolder = surfaceHolder;
     }
-
 
     public MediaProjection getmMediaProjection() {
         return mMediaProjection;

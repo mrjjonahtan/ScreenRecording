@@ -142,7 +142,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             GlobalVariables().setmMediaProjection(mediaProjection)
-            GlobalVariables().surface = surfaceView.holder.surface
+            //GlobalVariables().surfaceHolder = surfaceView.holder
 
             //val service: Intent = Intent(instance, MediaRecordService::class.java)//只有存
             val service: Intent = Intent(instance, ScreenRecordService::class.java)//全有

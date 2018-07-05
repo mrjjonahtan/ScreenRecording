@@ -2,16 +2,15 @@ package com.jonathan.screenrecording
 
 import android.app.Service
 import android.content.Intent
+import android.graphics.Bitmap
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
-import android.media.MediaCodec
-import android.media.MediaCodecInfo
-import android.media.MediaFormat
-import android.media.MediaMuxer
+import android.media.*
 import android.media.projection.MediaProjection
 import android.os.IBinder
 import android.util.Log
 import android.view.Surface
+import android.view.SurfaceHolder
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -50,6 +49,7 @@ class ScreenRecordService : Service() {
     private var mMediaProjection: MediaProjection? = null
     private var mMC: MediaCodec? = null
     private var mSurface: Surface? = null
+    private var mSurfaceHolder: SurfaceHolder? = null
     private var mMuxer: MediaMuxer? = null
     private var mVirtualDisplay: VirtualDisplay? = null
     private var mThread: Thread? = null
@@ -75,7 +75,7 @@ class ScreenRecordService : Service() {
         isSound = intent!!.getBooleanExtra("isSound", false)
 
         mMediaProjection = GlobalVariables().getmMediaProjection()
-        //mSurface = GlobalVariables().surface
+        mSurfaceHolder = GlobalVariables().surfaceHolder
 
         mainfun()
         return super.onStartCommand(intent, flags, startId)
@@ -95,6 +95,8 @@ class ScreenRecordService : Service() {
             Log.e(Tag, e.message)
         }
     }
+
+
 
     /**
      * stop task
@@ -139,6 +141,7 @@ class ScreenRecordService : Service() {
     fun encodeToVideoTrack(index: Int) {
         // 获取到的实时帧视频数据
         var encodedData = mMC!!.getOutputBuffer(index)
+
 
         if (mBufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
             // This indicated that the buffer marked as such contains codec
