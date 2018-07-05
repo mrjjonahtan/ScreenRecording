@@ -3,7 +3,7 @@
 
 语言：kotlin 和 java
 
-功能：录屏
+功能：录屏 存mp4
 
 大致流程如下：
 (MediaRecordService)
@@ -29,12 +29,54 @@ MediaProjectionManager -> getMediaProjection() -> MediaProjection -> VirtualDisp
 
 (ScreenRecordService)
 
-MediaProjection
+MediaCodec -> configure(MediaFormat) -> Surface
 
 Surface
 
 MediaMuxer
 
-MediaCodec
+MediaProjection -> createVirtualDisplay -> VirtualDisplay
 
 VirtualDisplay
+
+其中首先创建MediaCodec在创建过程中需要MediaFormat来设置编码过程中的一些属性，然后通过MediaCodec.createInputSurface函数
+
+创建Surface，通过start启动解码器
+
+创建MediaMuxer
+
+使用MediaProjection.createVirtualDisplay创建VirtualDisplay
+
+通过MediaCodec.dequeueOutputBuffer获取可用缓冲区，获取时需要事先已经声明了BufferInfo缓冲区，会返回int数值
+
+当获取值为MediaCodec.INFO_OUTPUT_FORMAT_CHANGED时
+
+通过MediaCodec.getOutputFormat()创建MediaFormat为MediaMuxer添加（使用addTrack函数添加）MediaFormat，启动MediaMuxer
+
+当换缓冲区的值为MediaCodec.INFO_TRY_AGAIN_LATER时表示超时
+
+当换缓冲区的值大于等于0时，表示有效输出
+
+使用MediaCodec.getOutputBuffer获取帧数据，
+
+但是在使用之前需要判断BufferInfo.flags，当flags为MediaCodec.BUFFER_FLAG_CODEC_CONFIG则缓冲区里的内容为MediaCodec初始化数据
+
+而不是视频数据，如果不是才可以使用MediaMuxer.writeSampleData合成视频文件
+
+使用完缓冲区的数据之后需要MediaCodec.releaseOutputBuffer释放缓冲区
+
+最后使用完成之后别忘了释放和关闭
+
+MediaCodec.stop()
+MediaCodec.release()
+MediaCodec = null
+
+VirtualDisplay.release()
+
+MediaProjection!!.stop()
+
+MediaMuxer.stop()
+MediaMuxer.release()
+MediaMuxer = null
+
+（提示：只是实时存视频帧数据，没有在SurfaceView显示）
