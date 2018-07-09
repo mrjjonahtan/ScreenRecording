@@ -2,10 +2,13 @@ package com.jonathan.screenrecording
 
 import android.app.Service
 import android.content.Intent
-import android.graphics.Bitmap
+import android.graphics.*
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
-import android.media.*
+import android.media.MediaCodec
+import android.media.MediaCodecInfo
+import android.media.MediaFormat
+import android.media.MediaMuxer
 import android.media.projection.MediaProjection
 import android.os.IBinder
 import android.util.Log
@@ -158,6 +161,31 @@ class ScreenRecordService : Service() {
         if (encodedData != null) {
             //将编码的样本写入复用器
             mMuxer!!.writeSampleData(mVideoTrackIndex, encodedData, mBufferInfo)
+            /*
+            try {
+                //ByteBuffer -> Byte
+                val data = ByteArray(encodedData.capacity())
+                if(data == null){
+                    return
+                }
+                val len:Int = data.size
+                val ff:Int = data.lastIndex
+                //从byte数组得到Bitmap
+                var bitmap:Bitmap = BitmapFactory.decodeByteArray(data,0,data.size)
+
+                // 获取到画布
+                var canvas:Canvas = mSurfaceHolder!!.lockCanvas()
+                if(canvas == null){
+                    return
+                }
+
+                canvas.drawBitmap(bitmap,0f,0f,Paint())
+
+                mSurfaceHolder!!.unlockCanvasAndPost(canvas)
+            }catch (e:Exception){
+                Log.e(Tag,e.message)
+            }*/
+
         }
 
     }
